@@ -1,0 +1,289 @@
+/*!
+* Version: 1.3.0
+* Template: xray Clinic And Patient Management Dashboard
+* Author: iqonic.design
+* Design and Developed by: iqonic.design
+* NOTE: This file contains the styling for Template.
+*
+*/
+
+// Configuration
+@import "./bootstrap/functions";
+
+// Xray Design system
+@import "./xray-design-system/variables";
+@import "./xray-design-system/variables-dark";
+@import "./xray-design-system/variables/index";
+@import "./bootstrap/variables";
+@import "./bootstrap/maps";
+@import "./bootstrap/mixins";
+@import "./bootstrap/utilities";
+
+// Xray Design System Mixin And Helper
+@import "./xray-design-system/helper/mixins";
+@import "./xray-design-system/helper/reboot";
+
+@import "./custom/auth/authentication";
+@import "./custom/ui-kit/ui-kit";
+@import "./custom/pages/chat.scss";
+@import "./custom/pages/_form-wizard-validate.scss";
+@import "./custom/pages/_form-wizard-vertical.scss";
+@import "./custom/pages/_form-wizard.scss";
+@import "./custom/pages/_forms.scss";
+@import "./custom/pages/doctor.scss";
+@import "./custom/pages/email.scss";
+@import "./custom/pages/dashboard-pages.scss";
+@import "./custom/pages/custom-style.scss";
+@import "./custom/pages/timeline.scss";
+@import "./custom/pages/_chart.scss";
+@import "./custom/pages/_icon.scss";
+
+// Customizer
+@import "./custom/customizer/layouts";
+
+
+
+///xray
+@import "./xray/custom/custom.scss";
+
+// -----------------------------------------------------------------------------
+// HHospital IA — lenguaje visual de los módulos funcionales
+// Esta capa reutiliza las variables de Bootstrap del template para conservar
+// compatibilidad con tema claro, oscuro y los colores elegidos en el engranaje.
+// -----------------------------------------------------------------------------
+.hh-page {
+  --hh-radius: 1rem;
+  --hh-shadow: 0 10px 30px rgba(30, 41, 59, .06);
+  animation: hh-page-enter .32s ease-out both;
+
+  > .d-flex.flex-wrap.align-items-center.justify-content-between.mb-4,
+  > .d-flex.flex-wrap.justify-content-between.gap-3.mb-4,
+  > .d-flex.flex-wrap.justify-content-between.align-items-center.gap-3.mb-4 {
+    position: relative;
+    overflow: hidden;
+    padding: 1.5rem;
+    border: 1px solid rgba(var(--bs-primary-rgb), .14);
+    border-radius: var(--hh-radius);
+    background:
+      radial-gradient(circle at 92% 10%, rgba(var(--bs-primary-rgb), .14), transparent 34%),
+      linear-gradient(135deg, var(--bs-body-bg), rgba(var(--bs-primary-rgb), .035));
+    box-shadow: var(--hh-shadow);
+
+    &::after {
+      content: '';
+      position: absolute;
+      right: -45px;
+      bottom: -65px;
+      width: 150px;
+      height: 150px;
+      border: 20px solid rgba(var(--bs-primary-rgb), .045);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    > * { position: relative; z-index: 1; }
+    h2 { font-weight: 700; letter-spacing: -.025em; }
+    p.text-primary { letter-spacing: .055em; text-transform: uppercase; font-size: .76rem; }
+  }
+
+  .card {
+    border: 1px solid var(--bs-border-color-translucent);
+    border-radius: var(--hh-radius);
+    box-shadow: var(--hh-shadow);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+
+  .card-header {
+    padding: 1.15rem 1.25rem;
+    border-bottom-color: var(--bs-border-color-translucent);
+    background: transparent;
+  }
+
+  .card-header h4 { font-weight: 650; letter-spacing: -.015em; }
+  .card-body { padding: 1.25rem; }
+  .card-footer { padding: .9rem 1.25rem; background: rgba(var(--bs-secondary-rgb), .025); }
+
+  .btn {
+    border-radius: .65rem;
+    font-weight: 600;
+    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
+  }
+
+  .btn:not(:disabled):active { transform: translateY(1px); }
+  .btn-primary:not(:disabled):hover { box-shadow: 0 7px 18px rgba(var(--bs-primary-rgb), .23); }
+  .form-control, .form-select, .input-group-text { border-radius: .65rem; }
+  .input-group > :not(:first-child) { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .input-group > :not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .form-control:focus, .form-select:focus { box-shadow: 0 0 0 .22rem rgba(var(--bs-primary-rgb), .11); }
+  .form-label { color: var(--bs-heading-color); font-size: .82rem; font-weight: 600; }
+
+  .table {
+    --bs-table-bg: transparent;
+    thead th { padding: .85rem 1rem; background: var(--bs-tertiary-bg); border-bottom: 0; letter-spacing: .055em; }
+    tbody tr { transition: background-color .15s ease; }
+    tbody tr:hover { background: rgba(var(--bs-primary-rgb), .035); }
+    tbody td { border-bottom-color: var(--bs-border-color-translucent); }
+  }
+
+  .badge { border-radius: 2rem; font-weight: 650; padding: .42rem .7rem; }
+  .alert { border: 0; border-left: 4px solid currentColor; border-radius: .75rem; }
+  .progress { overflow: hidden; border-radius: 1rem; background: var(--bs-tertiary-bg); }
+}
+
+// Bandeja legible y compacta de administraciones del plan de medicamentos.
+.viewer-layer .viewer { width: min(1060px, 100%) !important; }
+.viewer-layer .dose-timeline {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 1rem;
+  padding: 0 !important;
+
+  &::before { display: none !important; }
+  article { display: block !important; min-width: 0; }
+  .timeline-mark {
+    position: absolute !important; top: 1rem; left: 1rem;
+    width: 38px; height: 38px; border: 0; border-radius: 11px !important;
+    box-shadow: 0 4px 10px rgba(28, 66, 101, .12); font-size: 1rem;
+  }
+  .dose-card {
+    display: flex; flex-direction: column; height: 100%; min-height: 210px;
+    padding: 1rem 1rem .9rem 4.15rem !important;
+    border: 1px solid #d9e4ec !important; border-left: 4px solid #91a9ba !important;
+    border-radius: .9rem; background: #fff; box-shadow: 0 5px 16px rgba(28, 66, 101, .08);
+    transition: transform .16s, box-shadow .16s;
+    &:hover { transform: translateY(-2px); box-shadow: 0 11px 24px rgba(28, 66, 101, .13); }
+  }
+  article.due .dose-card { border-left-color: #e49a2f !important; background: linear-gradient(135deg, #fffaf1 0%, #fff 42%); }
+  article.done .dose-card { border-left-color: #35a36f !important; background: linear-gradient(135deg, #f3fbf7 0%, #fff 42%); }
+  article.future .dose-card { border-left-color: #4b88bc !important; background: linear-gradient(135deg, #f4f9fd 0%, #fff 42%); }
+  .dose-top { gap: .4rem; }
+  .dose-number { font-size: .66rem; letter-spacing: .055em; }
+  .dose-top h4 { overflow: hidden; max-width: 270px; margin: .12rem 0; font-size: .98rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+  .dose-top p { font-size: .76rem; line-height: 1.35; }
+  .dose-status { padding: .3rem .52rem; font-size: .63rem; }
+  .dose-details {
+    grid-template-columns: 1.35fr .85fr .85fr !important; gap: .45rem;
+    margin: .75rem 0 0 -3.15rem !important;
+    > div { gap: .4rem; padding: .55rem; border: 1px solid #e8eef2; border-radius: .55rem; background: rgba(247, 249, 251, .9); }
+    i { font-size: .95rem; }
+    small { font-size: .6rem; }
+    strong { overflow: hidden; font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
+  }
+  .dose-action, .administered-info { margin: auto 0 0 -3.15rem !important; padding-top: .75rem; }
+  .dose-action > span { max-width: 60%; font-size: .68rem; line-height: 1.3; }
+  .dose-action .btn { padding: .42rem .7rem; font-size: .74rem; }
+  .administered-info { font-size: .72rem; }
+}
+
+@media (max-width: 850px) {
+  .viewer-layer .dose-timeline { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 650px) {
+  .viewer-layer .dose-timeline {
+    .dose-card { min-height: auto; padding-left: 3.85rem !important; }
+    .dose-details {
+      grid-template-columns: 1fr 1fr; margin-left: -2.85rem !important;
+      > div:first-child { grid-column: 1 / -1; }
+    }
+    .dose-action, .administered-info { margin-left: -2.85rem !important; }
+  }
+}
+
+.hh-detail-page .hh-back-link {
+  gap: .25rem;
+  color: var(--bs-secondary-color);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color .15s ease, transform .15s ease;
+  &:hover { color: var(--bs-primary); transform: translateX(-3px); }
+}
+
+@keyframes hh-page-enter {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (hover: hover) {
+  .hh-page .station-card:hover { transform: translateY(-4px); border-color: rgba(var(--bs-primary-rgb), .25); box-shadow: 0 16px 36px rgba(30, 41, 59, .1); }
+}
+
+@media (max-width: 767.98px) {
+  .hh-page > .d-flex.flex-wrap.mb-4 { padding: 1.1rem; }
+  .hh-page > .d-flex.flex-wrap.mb-4 .btn { width: 100%; }
+  .hh-page .card-body { padding: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hh-page, .hh-page *, .hh-detail-page .hh-back-link { animation: none !important; transition: none !important; }
+}
+
+// Escala tipográfica operativa de HHospital.
+// Las vistas clínicas manejan mucha información en poco espacio; estos mínimos
+// mejoran la lectura sin perder la densidad visual de una aplicación empresarial.
+.hh-page {
+  font-size: .94rem;
+
+  small {
+    font-size: .69rem !important;
+    line-height: 1.35;
+  }
+
+  .form-label {
+    font-size: .76rem !important;
+  }
+
+  .form-control,
+  .form-select,
+  .input-group-text {
+    font-size: .82rem;
+  }
+
+  .table {
+    font-size: .8rem;
+
+    th {
+      font-size: .68rem !important;
+    }
+
+    td {
+      line-height: 1.35;
+    }
+  }
+
+  .btn-sm,
+  .badge {
+    font-size: .7rem;
+  }
+}
+
+// Los modales usan Teleport y quedan fuera de .hh-page en el DOM.
+.viewer-layer,
+.administration-layer,
+.transfer-layer,
+.modal-layer,
+.form-layer,
+.confirm-layer,
+.response-layer {
+  small {
+    font-size: .69rem !important;
+    line-height: 1.35;
+  }
+
+  .form-label {
+    font-size: .76rem !important;
+  }
+
+  .form-control,
+  .form-select {
+    font-size: .82rem;
+  }
+
+  p,
+  label {
+    line-height: 1.4;
+  }
+}
+/* La parametrización quirúrgica pertenece al área administrativa y no al tablero operativo. */
+.surgical-unit .daily-board a[href="/unidad-quirurgica/parametrizacion"] {
+  display: none !important;
+}

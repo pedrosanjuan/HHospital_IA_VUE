@@ -1,0 +1,25 @@
+import { apiRequest, toQuery } from './api'
+const post=(path,body)=>apiRequest(path,{method:'POST',body:JSON.stringify(body)})
+export const listarTiposQuirofano=()=>apiRequest('/v1/UnidadQuirurgica/TiposQx')
+export const crearTipoQuirofano=nombre=>post('/v1/UnidadQuirurgica/TiposQx',{nombre_tipo_quirofano:nombre})
+export const listarQuirofanos=()=>apiRequest('/v1/UnidadQuirurgica/Quirofanos')
+export const crearQuirofano=payload=>post('/v1/UnidadQuirurgica/Quirofanos',payload)
+export const guardarHorarioQuirofano=payload=>post('/v1/UnidadQuirurgica/Quirofano/Horario',payload)
+export const consultarTrazabilidadQuirofano=id=>apiRequest(`/v1/UnidadQuirurgica/Quirofano/Trazabilidad/${encodeURIComponent(id)}`)
+export const consultarResumenQuirofanos=()=>apiRequest('/v1/UnidadQuirurgica/Quirofanos/Resumen')
+export const consultarAgendaQuirofano=(id,filters={})=>apiRequest(`/v1/UnidadQuirurgica/Quirofano/${encodeURIComponent(id)}/cirugias${toQuery(filters)}`)
+export const consultarHistorialQuirofanos=filters=>apiRequest(`/v1/UnidadQuirurgica/Quirofanos/Historial${toQuery(filters)}`)
+export const consultarDetalleCirugia=id=>apiRequest(`/v1/UnidadQuirurgica/Cirugia/${encodeURIComponent(id)}`)
+export const programarCirugia=payload=>post('/v1/UnidadQuirurgica/Quirofano/cirugia/store',payload)
+export const actualizarEquipoCirugia=(id,equipo)=>post(`/v1/UnidadQuirurgica/Cirugia/${encodeURIComponent(id)}/updateEquipoMedico`,{equipo})
+export const iniciarCirugia=(id,observacion)=>post(`/v1/UnidadQuirurgica/Cirugia/${encodeURIComponent(id)}/iniciarManual`,{id_procedimiento:Number(id),observacion})
+export const cerrarCirugia=(id,payload)=>post(`/v1/UnidadQuirurgica/Cirugia/${encodeURIComponent(id)}/cierreManual`,{id_procedimiento:Number(id),...payload})
+export const anularCirugia=(id,observacion)=>post('/v1/UnidadQuirurgica/Quirofano/cirugia/anular',{id_procedimiento:Number(id),observacion})
+export const listarPisosQuirofano=()=>apiRequest('/v1/Hospitalizacion/PisoHospital')
+export const listarProfesionalesActivos=()=>apiRequest('/v1/Users?just_id=1&active=1')
+/** Consulta las cirugías vigentes después de resolver al paciente por su cédula. */
+export const consultarCirugiasActivasPaciente=id=>apiRequest(`/v1/Paciente/${encodeURIComponent(id)}/cirugiasActivas`)
+/** Detalle del servicio seleccionado, incluido el equipo quirúrgico requerido. */
+export const consultarServicioQuirurgico=id=>apiRequest(`/v1/Servicio/${encodeURIComponent(id)}`)
+/** Profesionales activos que pueden cubrir un perfil del equipo quirúrgico. */
+export const listarUsuariosPerfil=idPerfil=>apiRequest(`/v1/System/UsersxPerfil${toQuery({id_perfil:idPerfil})}`)
