@@ -12,6 +12,8 @@ export const listarProfesionalesEspecialidad = id =>
   apiRequest(`/v1/Especialidad/${encodeURIComponent(id)}/users`)
 export const consultarActividadesPaciente = (specialtyId, professionalId, patientId) =>
   apiRequest(`/v1/Intramural/CitaMedica/${encodeURIComponent(specialtyId)}/${encodeURIComponent(professionalId)}/${encodeURIComponent(patientId)}/findOrdendeServicio`)
+export const asignarOrdenServicioProfesional = (serviceOrderId, professionalId) =>
+  post(`/v1/OrdendeServicio/${encodeURIComponent(serviceOrderId)}/reasignarServicios`, { id_profesional: Number(professionalId) })
 
 export const agendarCita = payload => post('/v1/Intramural/Consultorio/cita/store', payload)
 export const consultarCita = id => apiRequest(`/v1/Intramural/CitaMedica/${encodeURIComponent(id)}`)
@@ -54,6 +56,8 @@ export const completarActividadClinica = (id, payload) =>
 
 // Documento y personal de apoyo. Se envían ambos nombres mientras el backend unifica el contrato.
 export const adjuntarDocumentoCita = (id, file) => post(`/v1/Intramural/${encodeURIComponent(id)}/uploadDocumentoCita`, { file })
+/** Solicita al backend una URL firmada de corta duración para el PDF privado. */
+export const consultarDocumentoCita = id => apiRequest(`/v1/Intramural/${encodeURIComponent(id)}/documentoCita`)
 export const actualizarPersonalApoyo = (id, supportId) => post(`/v1/Intramural/CitaMedica/${encodeURIComponent(id)}/editar/PersonalApoyo`, {
   id_personal_apoyo: Number(supportId),
   id_profesional_apoyo: Number(supportId),

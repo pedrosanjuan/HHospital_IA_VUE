@@ -51,8 +51,8 @@
 
       <FormSection icon="ri-shield-check-line" title="4. Aseguramiento">
         <div class="row g-3">
-          <FieldSelect id="id_contrato" v-model="form.id_contrato" class-name="col-md-6" label="Contrato — EPS" required :options="catalogs.contracts" :error="errors.id_contrato" @change="contractChanged" />
-          <FieldInput id="id_tercero_principal" v-model="form.id_tercero_principal" class-name="col-md-6" label="Tercero principal / EPS (ID)" type="number" :error="errors.id_tercero_principal" />
+          <div class="col-md-6"><label for="id_tercero_principal" class="form-label">Tercero contratante / EPS <span class="text-danger">*</span></label><SearchSelect id="id_tercero_principal" v-model="form.id_tercero_principal" :options="catalogs.contractingParties" :disabled="loadingCatalogs" placeholder="Seleccione un tercero contratante" search-placeholder="Buscar entidad o EPS…" @change="contractingPartyChanged"/><div v-if="errors.id_tercero_principal" class="invalid-feedback d-block">{{ errors.id_tercero_principal }}</div></div>
+          <div class="col-md-6"><label for="id_contrato" class="form-label">Contrato <span class="text-danger">*</span></label><SearchSelect id="id_contrato" v-model="form.id_contrato" :options="catalogs.contracts" :disabled="!form.id_tercero_principal||loadingContracts" :placeholder="loadingContracts?'Consultando contratos…':form.id_tercero_principal?'Seleccione un contrato':'Seleccione primero el tercero'" search-placeholder="Buscar contrato…"/><div v-if="errors.id_contrato" class="invalid-feedback d-block">{{ errors.id_contrato }}</div><small v-if="form.id_tercero_principal&&!loadingContracts&&!catalogs.contracts.length" class="text-danger">El tercero seleccionado no tiene contratos disponibles.</small></div>
           <FieldSelect id="id_tipo_usuario" v-model="form.id_tipo_usuario" class-name="col-md-4" label="Tipo de usuario" :options="catalogs.userTypes" :error="errors.id_tipo_usuario" />
           <FieldSelect id="id_rango" v-model="form.id_rango" class-name="col-md-4" label="Rango" :options="catalogs.ranges" :error="errors.id_rango" />
           <FieldSelect id="via_de_ingreso" v-model="form.via_de_ingreso" class-name="col-md-4" label="Vía de ingreso" :options="catalogs.entryRoutes" :error="errors.via_de_ingreso" />
@@ -84,6 +84,7 @@
 <script setup>
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import SearchSelect from '@/components/form/SearchSelect.vue'
 import { obtenerMensajeError } from '@/services/api'
 import { buscarPaciente, consultarCatalogo, crearPaciente } from '@/services/hospitalizacion'
 
@@ -96,17 +97,18 @@ const router = useRouter(), route = useRoute(), today = new Date().toISOString()
 const loadingCatalogs = ref(true), catalogError = ref(''), generalError = ref(''), saving = ref(false), verifying = ref(false), verification = ref('pending'), existingPatient = ref(null), createdId = ref(null), dirty = ref(false), formElement = ref(null)
 const diagnosisSearch = ref(''), diagnosisToAdd = ref(''), selectedDiagnoses = ref([])
 const fromAdmission = computed(() => route.query.from === 'admission')
-const catalogs = reactive({ documentTypes: [], genders: [], countries: [], departments: [], cities: [], maritalStatuses: [], occupations: [], diagnoses: [], relationshipTypes: [], userTypes: [], ranges: [], entryRoutes: [], contracts: [] })
+const catalogs = reactive({ documentTypes: [], genders: [], countries: [], departments: [], cities: [], maritalStatuses: [], occupations: [], diagnoses: [], relationshipTypes: [], userTypes: [], ranges: [], entryRoutes: [], contractingParties: [], contracts: [] })
 const form = reactive({ tipo_doc: '', identificacion: '', primernombre: '', segundonombre: '', primerapellido: '', segundoapellido: '', fecha_de_nacimiento: '', sexo: '', id_estado_civil: '', id_ocupacion: '', alias: '', email: '', celular1: '', celular2: '', pais: '', id_departamento: '', id_municipio: '', dir: '', postal_code: '', id_contrato: '', id_tercero_principal: '', id_tipo_usuario: '', id_rango: '', via_de_ingreso: '', lat: null, lng: null, parientes: [] })
 const errors = reactive({})
 const canSave = computed(() => !saving.value && !loadingCatalogs.value && !catalogError.value && verification.value === 'available')
 const filteredDiagnoses = computed(() => { const term = diagnosisSearch.value.toLowerCase(); return catalogs.diagnoses.filter(item => !selectedDiagnoses.value.some(selected => selected.id === item.id) && (!term || item.label.toLowerCase().includes(term))).slice(0, 100) })
 
-const labelOf = item => item.nombre || item.tag || item.descripcion || item.codigo || item.name || `Registro ${item.id}`
-const normalize = response => (Array.isArray(response) ? response : response?.data || []).map(item => ({ ...item, id: item.id ?? item.value, label: [item.codigo, labelOf(item)].filter((v, i, a) => v && a.indexOf(v) === i).join(' — ') }))
+const labelOf = item => item.nombre || item.razon_social || item.nombre_tercero || item.nombre_contrato || item.tag || item.descripcion || item.codigo || item.name || `Registro ${item.id}`
+const responseList = response => { if (Array.isArray(response)) return response; for (const key of ['data', 'terceros', 'terceros_contratantes', 'contratos', 'items']) { if (Array.isArray(response?.[key])) return response[key]; if (response?.[key] && response[key] !== response) { const nested = responseList(response[key]); if (nested.length) return nested } } return [] }
+const normalize = response => responseList(response).map(item => ({ ...item, id: item.id ?? item.id_tercero ?? item.id_contrato ?? item.value, label: [item.codigo, item.nit, labelOf(item)].filter((v, i, a) => v && a.indexOf(v) === i).join(' — ') }))
 async function loadCatalogs() {
   loadingCatalogs.value = true; catalogError.value = ''
-  const definitions = { documentTypes: 'System/tipodocumentos', genders: 'System/generos', countries: 'System/paises', maritalStatuses: 'System/estadosciviles', occupations: 'System/rips/ocupaciones', diagnoses: 'System/diagnosticos/cie10', relationshipTypes: 'System/tipo_pariente', userTypes: 'System/tipo_paciente_aseguramiento', ranges: 'System/tipo_paciente_rango', entryRoutes: 'System/rips/tipoIngresoAtencion', contracts: 'TercerosContratantes/contratos' }
+  const definitions = { documentTypes: 'System/tipodocumentos', genders: 'System/generos', countries: 'System/paises', maritalStatuses: 'System/estadosciviles', occupations: 'System/rips/ocupaciones', diagnoses: 'System/diagnosticos/cie10', relationshipTypes: 'System/tipo_pariente', userTypes: 'System/tipo_paciente_aseguramiento', ranges: 'System/tipo_paciente_rango', entryRoutes: 'System/rips/tipoIngresoAtencion', contractingParties: 'TerceroContratante' }
   try { const results = await Promise.all(Object.entries(definitions).map(async ([key, path]) => [key, normalize(await consultarCatalogo(path))])); results.forEach(([key, value]) => { catalogs[key] = value }) }
   catch (error) { catalogError.value = obtenerMensajeError(error) } finally { loadingCatalogs.value = false }
 }
@@ -116,7 +118,8 @@ async function verifyIdentity() { if (verifying.value) return; verifying.value =
 async function countryChanged() { form.id_departamento = ''; form.id_municipio = ''; catalogs.departments = []; catalogs.cities = []; if (!form.pais) return; loadingDepartments.value = true; try { catalogs.departments = normalize(await consultarCatalogo(`System/pais/${form.pais}/departamentos`)) } catch (error) { generalError.value = obtenerMensajeError(error) } finally { loadingDepartments.value = false } }
 async function departmentChanged() { form.id_municipio = ''; catalogs.cities = []; if (!form.id_departamento) return; loadingCities.value = true; try { catalogs.cities = normalize(await consultarCatalogo(`System/departamento/${form.id_departamento}/municipios`)) } catch (error) { generalError.value = obtenerMensajeError(error) } finally { loadingCities.value = false } }
 const loadingDepartments = ref(false), loadingCities = ref(false)
-function contractChanged(id) { const contract = catalogs.contracts.find(item => String(item.id) === String(id)); form.id_tercero_principal = contract?.id_tercero_principal || contract?.tercero_id || '' }
+const loadingContracts = ref(false)
+async function contractingPartyChanged(id) { form.id_contrato = ''; catalogs.contracts = []; delete errors.id_tercero_principal; delete errors.id_contrato; if (!id) return; loadingContracts.value = true; generalError.value = ''; try { catalogs.contracts = normalize(await consultarCatalogo(`TerceroContratante/${id}/contratos`)) } catch (error) { generalError.value = obtenerMensajeError(error) } finally { loadingContracts.value = false } }
 function searchDiagnoses() { diagnosisToAdd.value = '' }
 function addDiagnosis() { const item = catalogs.diagnoses.find(value => String(value.id) === String(diagnosisToAdd.value)); if (item && !selectedDiagnoses.value.some(value => value.id === item.id)) selectedDiagnoses.value.push(item); diagnosisToAdd.value = '' }
 function removeDiagnosis(id) { selectedDiagnoses.value = selectedDiagnoses.value.filter(item => item.id !== id) }
@@ -125,7 +128,7 @@ function removeRelative(index) { form.parientes.splice(index, 1); dirty.value = 
 function selectExisting() { sessionStorage.setItem('selected_patient', JSON.stringify(existingPatient.value)); router.back() }
 
 function validate() {
-  Object.keys(errors).forEach(key => delete errors[key]); const required = { tipo_doc: 'Seleccione el tipo de documento.', identificacion: 'Ingrese la identificación.', primernombre: 'Ingrese el primer nombre.', primerapellido: 'Ingrese el primer apellido.', fecha_de_nacimiento: 'Seleccione la fecha de nacimiento.', sexo: 'Seleccione el sexo.', email: 'Ingrese el correo electrónico.', celular1: 'Ingrese el celular principal.', pais: 'Seleccione el país.', id_contrato: 'Seleccione el contrato.' }
+  Object.keys(errors).forEach(key => delete errors[key]); const required = { tipo_doc: 'Seleccione el tipo de documento.', identificacion: 'Ingrese la identificación.', primernombre: 'Ingrese el primer nombre.', primerapellido: 'Ingrese el primer apellido.', fecha_de_nacimiento: 'Seleccione la fecha de nacimiento.', sexo: 'Seleccione el sexo.', email: 'Ingrese el correo electrónico.', celular1: 'Ingrese el celular principal.', pais: 'Seleccione el país.', id_tercero_principal: 'Seleccione el tercero contratante.', id_contrato: 'Seleccione el contrato.' }
   Object.entries(required).forEach(([key, message]) => { if (!String(form[key] ?? '').trim()) errors[key] = message })
   if (form.fecha_de_nacimiento > today) errors.fecha_de_nacimiento = 'La fecha no puede estar en el futuro.'
   if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.email = 'Ingrese un correo válido.'

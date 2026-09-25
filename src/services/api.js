@@ -1,6 +1,21 @@
 // Quita la barra final para que cada endpoint pueda comenzar con `/` sin generar `//`.
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/+$/, '')
 
+/** Convierte una ruta de archivo de la API en una URL navegable. */
+export function resolverUrlArchivo(value) {
+  const path = String(value || '').trim()
+  if (!path) return ''
+  if (/^(https?:|data:|blob:)/i.test(path)) return path
+
+  const configuredBase = String(import.meta.env.VITE_FILES_URL || '').replace(/\/+$/, '')
+  const serverBase = configuredBase || API_URL.replace(/\/api(?:\/v\d+)?$/i, '')
+  try {
+    return new URL(path.replace(/^\/+/, ''), `${serverBase}/`).href
+  } catch {
+    return `${serverBase}/${path.replace(/^\/+/, '')}`
+  }
+}
+
 /**
  * Convierte las distintas estructuras de error del backend en un solo mensaje.
  * La API actual puede devolver `message` como texto, JSON serializado o `errors`.

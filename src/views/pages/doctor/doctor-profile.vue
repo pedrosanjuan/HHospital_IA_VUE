@@ -297,7 +297,7 @@
 </template>
 <script setup>
 import { ref } from 'vue';
-import FsLightbox from 'fslightbox-vue/v3'
+import FsLightbox from 'fslightbox-vue'
 
 const generateImgPath = (path) => {
     return window.origin + import.meta.env.BASE_URL + path;
