@@ -72,7 +72,7 @@ export const usePatientsSearchStore = defineStore('patientsSearch', {
             }
           }
           catch (error) {
-            if (error.status === 400 && /no existe/i.test(error.payload?.message || '')) {
+            if ([400, 404].includes(error.status) && /no existe/i.test(error.payload?.message || '')) {
               response = []
               if (this.lastRequestKey === requestKey) {
                 this.pagination = { currentPage: 1, lastPage: 1, perPage: this.pagination.perPage, total: 0 }

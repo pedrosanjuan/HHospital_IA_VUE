@@ -163,8 +163,8 @@ async function findPatient() {
   loading.value = true; notice.text = ''; patient.value = null; patientNotFound.value = false
   try { patient.value = await buscarPaciente(dni.value) }
   catch (error) {
-    // Este endpoint usa 400 tanto para validación como para "no encontrado".
-    if (error.status === 400 && /no existe/i.test(error.payload?.message || '')) { patientNotFound.value = true; patientForm.identificacion = dni.value }
+    // "No encontrado": el backend responde 404 (antes 400); se aceptan ambos durante la transición.
+    if ([400, 404].includes(error.status) && /no existe/i.test(error.payload?.message || '')) { patientNotFound.value = true; patientForm.identificacion = dni.value }
     else showNotice(obtenerMensajeError(error))
   } finally { loading.value = false }
 }
