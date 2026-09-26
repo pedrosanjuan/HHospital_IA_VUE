@@ -61,8 +61,11 @@ test('trasladar y egresar a un paciente desde las pantallas', async ({ page, req
   await page.locator('.transfer-modal').getByRole('button', { name: 'Solicitar traslado' }).click()
   await expect(page.getByText('Solicitud de traslado creada')).toBeVisible()
 
-  // 3. Bandeja: aprobar y completar
-  await page.goto('/hospitalizacion/traslados')
+  // 3. Bandeja (se abre desde el menú lateral Estancia → Traslados): aprobar y completar
+  const menu = page.getByRole('navigation', { name: 'Navegación principal' })
+  await menu.getByRole('button', { name: /Estancia/ }).click()
+  await menu.getByRole('link', { name: /Traslados/ }).click()
+  await expect(page).toHaveURL(/\/hospitalizacion\/traslados$/)
   const tarjeta = page.locator('.tray-card', { hasText: documento })
   await expect(tarjeta).toBeVisible()
   await tarjeta.getByRole('button', { name: 'Aprobar' }).click()
