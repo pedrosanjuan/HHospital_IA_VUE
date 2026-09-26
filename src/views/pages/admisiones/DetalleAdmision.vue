@@ -14,7 +14,7 @@
       <div class="row g-4">
         <div class="col-lg-8"><b-card no-body><b-card-header class="d-flex align-items-center justify-content-between gap-3">
               <div><small class="text-primary fw-semibold">ORDEN DE TRABAJO #{{ admission.id }}</small><h4 class="mb-0">Servicios asociados</h4></div>
-              <button type="button" class="btn btn-primary btn-sm" @click="openAddService"><i class="ri-add-line me-1"></i>Agregar servicio</button>
+              <button v-if="puede('admisiones.servicios.agregar')" type="button" class="btn btn-primary btn-sm" @click="openAddService"><i class="ri-add-line me-1"></i>Agregar servicio</button>
             </b-card-header><b-card-body class="p-0">
               <div v-if="!admission.ordenesdeservicio?.length" class="text-center text-muted py-5">No hay servicios
                 asociados.</div>
@@ -108,6 +108,10 @@ import { defineComponent, h, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { obtenerMensajeError } from '@/services/api'
 import { agregarServicioOrden, consultarOrdenTrabajo, consultarServiciosPaquete } from '@/services/hospitalizacion'
+import { usePermisos } from '@/store/pinia/permisos'
+// Oculta las acciones que el usuario no tiene permiso de hacer (el backend igual lo valida).
+const { puede } = usePermisos()
+
 const Info = defineComponent({ props: { label: String, value: [String, Number] }, setup: p => () => h('div', [h('small', { class: 'text-muted d-block' }, p.label), h('strong', p.value || 'No registrado')]) })
 const route = useRoute(), router = useRouter(), admission = ref(null), loading = ref(true), error = ref('')
 const expandedServices = reactive(new Set())

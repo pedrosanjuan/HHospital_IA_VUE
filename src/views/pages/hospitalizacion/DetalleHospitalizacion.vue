@@ -27,10 +27,10 @@
         <div><small>ACCIONES</small><h2>Gestión de la estancia</h2></div>
         <div class="d-flex flex-wrap gap-2">
           <router-link :to="attentionRoute" class="btn btn-outline-primary"><i class="ph ph-stethoscope me-1"></i>Abrir atención</router-link>
-          <button type="button" class="btn btn-outline-primary" :disabled="Boolean(openTransfers.length)" :title="openTransfers.length ? 'Ya hay un traslado en curso' : ''" @click="showTransfer = true">
+          <button v-if="puede('hospitalizacion.traslados.solicitar')" type="button" class="btn btn-outline-primary" :disabled="Boolean(openTransfers.length)" :title="openTransfers.length ? 'Ya hay un traslado en curso' : ''" @click="showTransfer = true">
             <i class="ph ph-arrows-left-right me-1"></i>Solicitar traslado
           </button>
-          <button type="button" class="btn btn-danger" @click="openDischarge"><i class="ph ph-sign-out me-1"></i>Egresar paciente</button>
+          <button v-if="puede('hospitalizacion.egreso.registrar')" type="button" class="btn btn-danger" @click="openDischarge"><i class="ph ph-sign-out me-1"></i>Egresar paciente</button>
         </div>
       </section>
 
@@ -157,6 +157,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { obtenerMensajeError } from '@/services/api'
 import { consultarDetalle, egresarHospitalizacion } from '@/services/hospitalizacion'
 import SolicitarTrasladoModal from '@/views/clinical/SolicitarTrasladoModal.vue'
+import { usePermisos } from '@/store/pinia/permisos'
+// Oculta las acciones que el usuario no tiene permiso de hacer (el backend igual lo valida).
+const { puede } = usePermisos()
+
 
 const route = useRoute()
 const router = useRouter()
@@ -258,7 +262,7 @@ async function transferSaved() {
 onMounted(async () => {
   await load()
   // Desde la estación de enfermería, "Egresar paciente" llega con ?accion=egreso.
-  if (route.query.accion === 'egreso' && isActive.value) openDischarge()
+  if (route.query.accion === 'egreso' && isActive.value && puede('hospitalizacion.egreso.registrar')) openDischarge()
 })
 </script>
 

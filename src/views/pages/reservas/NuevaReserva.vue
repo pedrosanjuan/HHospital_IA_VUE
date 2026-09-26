@@ -24,7 +24,7 @@
           <div v-else-if="!beds.length" class="reservation-empty"><i class="ph ph-bed"></i><h3 class="h6">No hay camas disponibles</h3><p>Prueba con otras fechas o tipo de habitación.</p></div>
           <div v-else class="bed-options"><button v-for="bed in beds" :key="bed.id" type="button" class="bed-option" :class="{ selected: form.cama_id === bed.id }" @click="form.cama_id = bed.id"><span class="bed-icon"><i class="ph ph-bed"></i></span><span class="bed-copy"><strong>{{ bed.nombre_cama || bed.nombre }}</strong><small>{{ bed.habitacion }}</small><small><i class="ph ph-map-pin"></i>{{ locationText(bed) }}</small><em><i class="ph ph-nurse"></i>{{ bed.ubicacion?.estacion || 'Estación no informada' }}</em></span><span class="select-mark"><i class="ph ph-check"></i></span></button></div>
           <div v-if="formError" class="alert alert-danger mt-3 mb-0">{{ formError }}</div>
-        </div><footer class="card-footer bg-transparent"><button class="btn btn-primary w-100 py-2" :disabled="!canSubmit || saving"><span v-if="saving" class="spinner-border spinner-border-sm me-2"></span><i v-else class="ph ph-paper-plane-tilt me-2"></i>{{ saving ? 'Enviando reserva…' : 'Enviar a enfermería' }}</button></footer></section></div>
+        </div><footer class="card-footer bg-transparent"><p v-if="!puede('hospitalizacion.reservas.crear')" class="text-danger small mb-2"><i class="ph ph-lock me-1"></i>No tiene permiso para reservar camas.</p><button v-if="puede('hospitalizacion.reservas.crear')" class="btn btn-primary w-100 py-2" :disabled="!canSubmit || saving"><span v-if="saving" class="spinner-border spinner-border-sm me-2"></span><i v-else class="ph ph-paper-plane-tilt me-2"></i>{{ saving ? 'Enviando reserva…' : 'Enviar a enfermería' }}</button></footer></section></div>
       </div>
     </form>
   </main>
@@ -35,6 +35,10 @@ import { useRoute } from 'vue-router'
 import { obtenerMensajeError } from '@/services/api'
 import { buscarPacienteExacto, consultarCamas, consultarOrdenesPaciente, listarUbicaciones } from '@/services/hospitalizacion'
 import { useReservationsStore } from '@/store/pinia/reservas'
+import { usePermisos } from '@/store/pinia/permisos'
+// Oculta las acciones que el usuario no tiene permiso de hacer (el backend igual lo valida).
+const { puede } = usePermisos()
+
 const route = useRoute(), store = useReservationsStore(); const dni = ref(''), patient = ref(null), orders = ref([]), roomTypes = ref([]), beds = ref([]), roomType = ref(''), searching = ref(false), loadingOrders = ref(false), loadingBeds = ref(false), searchedBeds = ref(false), saving = ref(false), errors = ref({}), formError = ref(''), success = ref(null)
 const contextualAdmission = computed(() => Boolean(route.query.paciente && route.query.orden))
 const now = new Date(Date.now() + 60 * 60 * 1000); now.setMinutes(0, 0, 0)

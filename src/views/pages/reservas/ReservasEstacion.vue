@@ -12,7 +12,7 @@
 
     <section v-if="!loading && recoverable.length" class="card mb-4 border-warning">
       <header class="card-header bg-warning-subtle"><h2 class="h5 mb-1">Ingresos pendientes de completar</h2><p class="mb-0 small">Estas reservas quedaron aceptadas sin hospitalización y pueden recuperarse de forma segura.</p></header>
-      <div class="card-body"><div class="row g-3"><article v-for="item in recoverable" :key="item.id_reserva || item.id" class="col-xl-6"><div class="reservation-card"><h3 class="h6">{{ item.nombre_paciente || item.paciente_nombre }}</h3><p class="text-muted">{{ item.nombre_cama || item.cama_nombre }} · Orden #{{ item.orden_trabajo_id || item.id_orden_trabajo }}</p><button class="btn btn-warning w-100" @click="openResponse(item,2)"><i class="ph ph-arrows-clockwise me-2"></i>Completar ingreso</button></div></article></div></div>
+      <div class="card-body"><div class="row g-3"><article v-for="item in recoverable" :key="item.id_reserva || item.id" class="col-xl-6"><div class="reservation-card"><h3 class="h6">{{ item.nombre_paciente || item.paciente_nombre }}</h3><p class="text-muted">{{ item.nombre_cama || item.cama_nombre }} · Orden #{{ item.orden_trabajo_id || item.id_orden_trabajo }}</p><button v-if="puede('hospitalizacion.reservas.responder')" class="btn btn-warning w-100" @click="openResponse(item,2)"><i class="ph ph-arrows-clockwise me-2"></i>Completar ingreso</button></div></article></div></div>
     </section>
 
     <template v-if="!loading && rooms.length">
@@ -23,7 +23,7 @@
             <div class="d-flex justify-content-between gap-2"><div class="patient-avatar">{{ initials(reservation.nombre_paciente) }}</div><span class="badge bg-warning-subtle text-warning align-self-start">{{ reservation.estado_reserva || 'Pendiente' }}</span></div>
             <h3 class="h5 mt-3 mb-0">{{ reservation.nombre_paciente }}</h3><small class="text-muted">{{ reservation.identificacion_paciente }}</small>
             <div class="reservation-data"><div><i class="ph ph-bed"></i><span><small>Cama solicitada</small><strong>{{ reservation.nombre_cama }}</strong><em>{{ reservation.nombre_habitacion }}</em></span></div><div><i class="ph ph-calendar"></i><span><small>Inicio programado</small><strong>{{ formatDate(reservation.fecha_ocupacion_inicio) }}</strong><em>{{ reservation.periodo }} días · {{ reservation.nombre_tipo_reserva }}</em></span></div><div><i class="ph ph-file-text"></i><span><small>Orden de trabajo</small><strong>#{{ reservation.orden_trabajo_id }}</strong><em>Solicitó: {{ reservation.reserved_by_nombre || reservation.reserved_by || 'No informado' }}</em></span></div></div>
-            <div class="d-flex gap-2 mt-3"><button class="btn btn-outline-danger flex-fill" :disabled="busy(reservation)" @click="openResponse(reservation,3)">Rechazar</button><button class="btn btn-primary flex-fill" :disabled="busy(reservation)" @click="openResponse(reservation,2)">Aceptar e ingresar</button></div>
+            <div v-if="puede('hospitalizacion.reservas.responder')" class="d-flex gap-2 mt-3"><button class="btn btn-outline-danger flex-fill" :disabled="busy(reservation)" @click="openResponse(reservation,3)">Rechazar</button><button class="btn btn-primary flex-fill" :disabled="busy(reservation)" @click="openResponse(reservation,2)">Aceptar e ingresar</button></div>
           </div></article>
         </div></div>
       </section>
@@ -49,6 +49,10 @@ import { useRoute } from 'vue-router'
 import SearchSelect from '@/components/form/SearchSelect.vue'
 import { obtenerMensajeError } from '@/services/api'
 import { useReservationsStore } from '@/store/pinia/reservas'
+import { usePermisos } from '@/store/pinia/permisos'
+// Oculta las acciones que el usuario no tiene permiso de hacer (el backend igual lo valida).
+const { puede } = usePermisos()
+
 const route=useRoute(),store=useReservationsStore(),stationId=route.params.id,loading=ref(true),error=ref(''),responding=ref(false),notice=reactive({text:'',type:'success'}),dialog=reactive({open:false,status:2,item:null,observation:'',serviceId:'',services:[],requiresService:false,error:''});let timer
 const rooms=computed(()=>store.pendientesByEstacion[stationId]||[]),accepted=computed(()=>store.aceptadasByEstacion[stationId]||[]),recoverable=computed(()=>accepted.value.filter(item=>!item.id_hospitalizacion&&!item.hospitalizacion_id)),total=computed(()=>store.pendingCount(stationId)),stationName=computed(()=>rooms.value[0]?.nombre_estacion||accepted.value[0]?.nombre_estacion||`Estación #${stationId}`),updatedAt=computed(()=>store.lastUpdatedByEstacion[stationId]?`Actualizado ${new Intl.DateTimeFormat('es-CO',{timeStyle:'short'}).format(store.lastUpdatedByEstacion[stationId])}`:'Sin actualizar')
 const formatDate=v=>{if(!v)return'—';const date=new Date(String(v).replace(' ','T'));return Number.isNaN(date.getTime())?v:new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(date)},initials=n=>String(n||'P').split(' ').slice(0,2).map(v=>v[0]).join('').toUpperCase(),sorted=a=>[...a].sort((x,y)=>String(x.fecha_ocupacion_inicio).localeCompare(String(y.fecha_ocupacion_inicio))),busy=r=>Boolean(store.respondingById[r.id_reserva||r.id])

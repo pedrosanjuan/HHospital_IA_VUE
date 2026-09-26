@@ -6,7 +6,7 @@
         <h1 class="mb-1">Reservas de cama</h1>
         <p class="mb-0 opacity-75">Consulta y acepta las solicitudes enviadas a enfermería.</p>
       </div>
-      <router-link to="/admision/reservas/nueva" class="btn btn-light">
+      <router-link v-if="puede('hospitalizacion.reservas.crear')" to="/admision/reservas/nueva" class="btn btn-light">
         <i class="ph ph-plus me-1"></i>Nueva reserva
       </router-link>
     </section>
@@ -54,7 +54,7 @@
               <td><span class="badge rounded-pill px-3 py-2" :class="statusClass(item)">{{ statusName(item) }}</span></td>
               <td class="text-end text-nowrap">
                 <button class="btn btn-sm btn-outline-secondary me-2" @click="openDetail(item)"><i class="ph ph-eye me-1"></i>Detalle</button>
-                <button v-if="isPending(item)" class="btn btn-sm btn-primary" :disabled="responding" @click="openAccept(item)"><i class="ph ph-check-circle me-1"></i>Aceptar</button>
+                <button v-if="isPending(item) && puede('hospitalizacion.reservas.responder')" class="btn btn-sm btn-primary" :disabled="responding" @click="openAccept(item)"><i class="ph ph-check-circle me-1"></i>Aceptar</button>
               </td>
             </tr>
           </tbody>
@@ -113,6 +113,10 @@ import SearchSelect from '@/components/form/SearchSelect.vue'
 import { obtenerMensajeError } from '@/services/api'
 import { responderReserva } from '@/services/hospitalizacion'
 import { useReservationsStore } from '@/store/pinia/reservas'
+import { usePermisos } from '@/store/pinia/permisos'
+// Oculta las acciones que el usuario no tiene permiso de hacer (el backend igual lo valida).
+const { puede } = usePermisos()
+
 
 const store = useReservationsStore()
 const search = ref('')

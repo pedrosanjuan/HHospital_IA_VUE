@@ -12,7 +12,10 @@ Siempre prueban el **backend local** (`../HHospital_IA` en `http://127.0.0.1:800
    ```
    E2E_EMAIL=e2e@sofingtech.test
    E2E_PASSWORD=la-contraseña
+   E2E_ENFERMERIA_EMAIL=e2e-enfermeria@sofingtech.test
+   E2E_ENFERMERIA_PASSWORD=la-contraseña
    ```
+   El primero es un usuario con rol Administrador. El segundo tiene el rol de prueba "E2E Enfermería (pruebas)", con permisos limitados, y sirve para comprobar que las acciones no permitidas no aparecen.
 4. Revise que el backend (`../HHospital_IA`) tenga su `.env` apuntando a QA.
 
 No hace falta levantar nada a mano. Playwright arranca el backend (puerto 8000, con 4 procesos) y el frontend de pruebas (puerto 3100) si no están corriendo, y los reutiliza si ya lo están. Su `npm run dev` normal, en el puerto 3000, no interfiere.
@@ -42,6 +45,8 @@ npx playwright show-trace test-results/<carpeta-de-la-prueba>/trace.zip
 | `auth.setup.js` | Inicia sesión una vez y guarda la sesión para las demás pruebas. |
 | `helpers.js` | Utilidades: documento de prueba único, elegir opciones en listas y buscadores. |
 | `pacientes.spec.js` | Crear un paciente desde el formulario. |
+| `permisos.spec.js` | Roles → Permisos: agrupación por módulo, buscador y descripción de cada permiso (solo consulta). |
+| `permisos-enfermeria.spec.js` | Con un usuario de enfermería: no ve "Egresar" ni "Aprobar", el backend le responde 403 si lo intenta, y sí puede solicitar y completar traslados. |
 | `hospitalizacion.spec.js` | Estancia completa por pantalla: detalle de la hospitalización, solicitar traslado, aprobarlo y completarlo en la bandeja, y egresar. El paciente hospitalizado se prepara por la API. |
 
 Cada flujo nuevo va en su propio archivo `<modulo>.spec.js`. Para ubicar los campos se usa su `id` (`#primernombre`) o su texto visible (`getByLabel('Correo electrónico')`). Por eso, cuando se crea una pantalla, conviene que cada campo tenga `id` y etiqueta.

@@ -4,7 +4,7 @@
     <div v-if="loading" class="text-center py-5"><span class="spinner-border text-primary"></span><p class="text-muted mt-2">Actualizando estación…</p></div>
     <div v-else-if="error" class="alert alert-danger"><strong>No fue posible consultar la estación.</strong> {{ error }}<button class="btn btn-sm btn-outline-danger ms-3" @click="load">Reintentar</button></div>
     <template v-else-if="detail">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div><p class="text-primary fw-semibold mb-1">Estación #{{ detail.estacion?.id }}</p><h2 class="mb-1">{{ detail.estacion?.nombre }}</h2><p class="text-muted mb-0">Distribución de salas, habitaciones, camas y pacientes activos.</p></div><div class="d-flex gap-2"><router-link :to="`/hospitalizacion/estaciones/${route.params.id}/reservas`" class="btn btn-primary"><i class="ph ph-bell me-1"></i>Reservas</router-link><button class="btn btn-outline-primary" @click="load"><i class="ri-refresh-line me-1"></i>Actualizar</button></div></div><div v-if="actionMessage" class="alert" :class="`alert-${actionMessageType}`">{{ actionMessage }}</div>
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div><p class="text-primary fw-semibold mb-1">Estación #{{ detail.estacion?.id }}</p><h2 class="mb-1">{{ detail.estacion?.nombre }}</h2><p class="text-muted mb-0">Distribución de salas, habitaciones, camas y pacientes activos.</p></div><div class="d-flex gap-2"><router-link v-if="puede('hospitalizacion.reservas.responder')" :to="`/hospitalizacion/estaciones/${route.params.id}/reservas`" class="btn btn-primary"><i class="ph ph-bell me-1"></i>Reservas</router-link><button class="btn btn-outline-primary" @click="load"><i class="ri-refresh-line me-1"></i>Actualizar</button></div></div><div v-if="actionMessage" class="alert" :class="`alert-${actionMessageType}`">{{ actionMessage }}</div>
       <div class="row g-3 mb-4"><div v-for="metric in metrics" :key="metric.label" class="col-6 col-md-4 col-xl"><div class="metric"><small>{{ metric.label }}</small><strong :class="metric.class">{{ metric.value }}</strong></div></div></div>
       <div v-if="!detail.salas?.length" class="card card-body text-center py-5 text-muted">Esta estación no tiene salas registradas.</div>
       <b-card v-for="room in detail.salas" v-else :key="room.id_sala" no-body class="mb-4"><b-card-header class="d-flex flex-wrap justify-content-between align-items-center gap-2"><div><h4 class="mb-0">{{ room.nombre_sala }}</h4><small class="text-muted">{{ room.tipo_sala?.nombre }}</small></div><span class="badge bg-primary-subtle text-primary">{{ room.resumen?.total_camas }} camas</span></b-card-header><b-card-body>
@@ -27,8 +27,8 @@
                     <button @click="openBedPlan(bed, 'procedure')"><i class="ph ph-clipboard-text"></i>Procedimientos</button>
                     <router-link :to="{ ...attentionRoute(bed), hash: '#historia-clinica' }" target="_blank" rel="noopener noreferrer"><i class="ph ph-book-open-text"></i>Historia clínica<i class="ph ph-arrow-square-out external-icon"></i></router-link>
                     <span>Gestión</span>
-                    <button v-if="bed.info_paciente.hospitalizacion?.estado !== 'en_traslado'" @click="openTransfer(bed)"><i class="ph ph-arrows-left-right"></i>Solicitar traslado</button>
-                    <router-link v-if="bed.info_paciente.hospitalizacion?.id" class="danger-action" :to="{ path: `/hospitalizacion/${bed.info_paciente.hospitalizacion.id}`, query: { accion: 'egreso' } }"><i class="ph ph-sign-out"></i>Egresar paciente</router-link>
+                    <button v-if="bed.info_paciente.hospitalizacion?.estado !== 'en_traslado' && puede('hospitalizacion.traslados.solicitar')" @click="openTransfer(bed)"><i class="ph ph-arrows-left-right"></i>Solicitar traslado</button>
+                    <router-link v-if="bed.info_paciente.hospitalizacion?.id && puede('hospitalizacion.egreso.registrar')" class="danger-action" :to="{ path: `/hospitalizacion/${bed.info_paciente.hospitalizacion.id}`, query: { accion: 'egreso' } }"><i class="ph ph-sign-out"></i>Egresar paciente</router-link>
                   </div>
                 </details>
               </div>
@@ -53,6 +53,10 @@ import SignosVitalesModal from '@/views/clinical/SignosVitalesModal.vue'
 import PlanActivoModal from '@/views/clinical/PlanActivoModal.vue'
 import PlanClinicoModal from '@/views/clinical/PlanClinicoModal.vue'
 import SolicitarTrasladoModal from '@/views/clinical/SolicitarTrasladoModal.vue'
+import { usePermisos } from '@/store/pinia/permisos'
+// Oculta las acciones que el usuario no tiene permiso de hacer (el backend igual lo valida).
+const { puede } = usePermisos()
+
 const route = useRoute(), store = useStationsStore(), plans = usePatientPlansStore(), detail = ref(null), loading = ref(true), error = ref(''), vitalsPatient = ref(null), selectedBed = ref(null), viewerType = ref(null), editorType = ref(null), transferBed = ref(null), actionMessage = ref(''), actionMessageType = ref('danger')
 const metrics = computed(() => { const r = detail.value?.resumen || {}; return [{ label: 'Salas', value: r.total_salas ?? 0 }, { label: 'Habitaciones', value: r.total_habitaciones ?? 0 }, { label: 'Camas', value: r.total_camas ?? 0 }, { label: 'Ocupadas', value: r.ocupadas ?? 0, class: 'text-primary' }, { label: 'Disponibles', value: r.disponibles ?? 0, class: 'text-success' }, { label: 'Camas con reserva activa', value: r.reservadas ?? 0, class: 'text-warning' }] })
 const initials = name => String(name || 'P').split(' ').slice(0, 2).map(value => value[0]).join('').toUpperCase()

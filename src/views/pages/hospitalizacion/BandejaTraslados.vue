@@ -110,6 +110,10 @@ import {
   aprobarTraslado, cancelarTraslado, completarTraslado, iniciarTransitoTraslado,
   listarEstaciones, listarTrasladosAbiertos, rechazarTraslado,
 } from '@/services/hospitalizacion'
+import { usePermisos } from '@/store/pinia/permisos'
+// Oculta las acciones que el usuario no tiene permiso de hacer (el backend igual lo valida).
+const { puede } = usePermisos()
+
 
 const transfers = ref([])
 const stations = ref([])
@@ -137,7 +141,15 @@ const BY_STATUS = {
   Aprobada: ['transit', 'complete', 'cancel'],
   'En Tránsito': ['complete', 'cancel'],
 }
-const actionsFor = transfer => (BY_STATUS[transfer.status] || []).map(key => ACTIONS[key])
+// Permiso que exige cada acción (el mismo que valida el backend).
+const PERMISO_ACCION = {
+  approve: 'hospitalizacion.traslados.aprobar', reject: 'hospitalizacion.traslados.aprobar',
+  transit: 'hospitalizacion.traslados.ejecutar', complete: 'hospitalizacion.traslados.ejecutar',
+  cancel: 'hospitalizacion.traslados.cancelar',
+}
+const actionsFor = transfer => (BY_STATUS[transfer.status] || [])
+  .filter(key => puede(PERMISO_ACCION[key]))
+  .map(key => ACTIONS[key])
 
 const counters = computed(() => [
   { status: 'Pendiente', label: 'pendientes', css: 'is-pending' },

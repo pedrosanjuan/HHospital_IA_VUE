@@ -12,7 +12,7 @@
       <!-- Pestañas: ver la última toma o registrar una nueva -->
       <nav class="vital-tabs">
         <button type="button" :class="{ active: tab === 'ultima' }" @click="tab = 'ultima'"><i class="ph ph-clock-counter-clockwise me-1"></i>Última toma</button>
-        <button type="button" :class="{ active: tab === 'registrar' }" :disabled="!canRegister" :title="canRegister ? '' : 'El paciente no tiene una admisión activa'" @click="tab = 'registrar'"><i class="ph ph-plus me-1"></i>Registrar toma</button>
+        <button v-if="puede('historia_clinica.signos_vitales.registrar')" type="button" :class="{ active: tab === 'registrar' }" :disabled="!canRegister" :title="canRegister ? '' : 'El paciente no tiene una admisión activa'" @click="tab = 'registrar'"><i class="ph ph-plus me-1"></i>Registrar toma</button>
       </nav>
 
       <div class="modal-body">
@@ -98,6 +98,10 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { obtenerMensajeError } from '@/services/api'
 import { consultarUltimosSignosVitales, registrarSignosVitales } from '@/services/hospitalizacion'
+import { usePermisos } from '@/store/pinia/permisos'
+// Oculta las acciones que el usuario no tiene permiso de hacer (el backend igual lo valida).
+const { puede } = usePermisos()
+
 
 // patient: el paciente de la cama (info_paciente de la estación de enfermería).
 const props = defineProps({ patient: { type: Object, required: true } })

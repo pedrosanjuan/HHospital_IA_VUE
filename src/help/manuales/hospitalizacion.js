@@ -30,7 +30,9 @@ export default [
       'Verifique paciente y cama.',
       'Confirme la aceptación.',
     ],
-    notas: [],
+    notas: [
+      'Solo verá los botones de las acciones que su rol tiene permitidas. Si le falta uno, solicítelo al administrador del sistema.',
+    ],
   },
   {
     ruta: /^\/hospitalizacion\/estaciones\/[^/]+$/,
@@ -51,6 +53,7 @@ export default [
       'Seleccione la tarea clínica requerida y complete el formulario.',
     ],
     notas: [
+      'Solo verá los botones de las acciones que su rol tiene permitidas. Si le falta uno, solicítelo al administrador del sistema.',
       'Una dosis se puede registrar desde una hora antes de su hora programada.',
       'Antes de confirmar una dosis, verifique el nombre del paciente que aparece en la ventana.',
       'Si los signos vitales generan una alerta, el sistema lo indica al guardar: informe al médico.',
@@ -104,7 +107,9 @@ export default [
       'Revise el detalle.',
       'Use las acciones superiores para agregar información.',
     ],
-    notas: [],
+    notas: [
+      'Solo verá los botones de las acciones que su rol tiene permitidas. Si le falta uno, solicítelo al administrador del sistema.',
+    ],
   },
   {
     // Va antes del detalle (/hospitalizacion/:id), porque "traslados" también coincidiría con él.
@@ -127,6 +132,7 @@ export default [
       'Al llegar el paciente a la nueva cama, pulse "Completar".',
     ],
     notas: [
+      'Solo verá los botones de las acciones que su rol tiene permitidas. Si le falta uno, solicítelo al administrador del sistema.',
       'Rechazar solo es posible mientras la solicitud está pendiente; después use "Cancelar".',
       'El rechazo y la cancelación exigen un motivo.',
       'Al completar, la cama de origen queda libre. Si la cama destino fue ocupada mientras tanto, el sistema no deja completar.',
@@ -150,6 +156,7 @@ export default [
       'Si hay un traslado en curso, resuélvalo primero en la Bandeja de traslados.',
     ],
     notas: [
+      'Solo verá los botones de las acciones que su rol tiene permitidas. Si le falta uno, solicítelo al administrador del sistema.',
       'El egreso no se puede deshacer: libera la cama, suspende las dosis pendientes y cierra la admisión.',
       'Una vez egresado, el paciente puede volver a ser admitido con una nueva admisión.',
     ],

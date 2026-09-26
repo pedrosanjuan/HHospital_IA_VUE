@@ -129,7 +129,7 @@
           <div class="col-md-4"><div class="confirm-tile"><small>Orden de trabajo</small><strong>#{{ orderId || 'Sin ID' }}</strong><span>Admisión creada</span></div></div>
         </div>
         <label class="form-label">Observaciones</label><textarea v-model.trim="observations" class="form-control" rows="4" maxlength="500" placeholder="Motivo o notas relevantes del ingreso"></textarea><div class="text-end text-muted small mt-1">{{ observations.length }}/500</div>
-        <div class="d-flex justify-content-between mt-4"><button class="btn btn-light" @click="step = 3">Atrás</button><button class="btn btn-primary" :disabled="loading" @click="confirmAdmission">Confirmar ingreso hospitalario</button></div>
+        <div class="d-flex justify-content-between mt-4"><button class="btn btn-light" @click="step = 3">Atrás</button><button v-if="puede('hospitalizacion.ingreso.directo')" class="btn btn-primary" :disabled="loading" @click="confirmAdmission">Confirmar ingreso hospitalario</button><span v-else class="text-danger small align-self-center"><i class="ph ph-lock me-1"></i>No tiene permiso para el ingreso directo a cama.</span></div>
       </b-card-body>
     </b-card>
 
@@ -142,6 +142,10 @@ import { onMounted, reactive, ref } from 'vue'
 import { obtenerMensajeError } from '@/services/api'
 import { buscarPaciente, crearPaciente, crearOrden, consultarCamas, ingresarPaciente } from '@/services/hospitalizacion'
 import { useStationsStore } from '@/store/pinia/estaciones'
+import { usePermisos } from '@/store/pinia/permisos'
+// Oculta las acciones que el usuario no tiene permiso de hacer (el backend igual lo valida).
+const { puede } = usePermisos()
+
 
 const today = new Date().toISOString().slice(0, 10)
 const localDateTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)

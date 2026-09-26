@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import Sidebar from "@/components/partials/Sidebar.vue";
 import Footer from "@/components/partials/Footer.vue";
 import Header from "@/components/partials/Header.vue";
@@ -25,8 +25,14 @@ import ContextHelp from '@/components/help/ContextHelp.vue';
 
 // Pinia Store
 import { useSetting } from '@/store/pinia';
+import { usePermisosStore } from '@/store/pinia/permisos';
 
 const store = useSetting();
+
+// Al abrir la aplicación se refrescan los permisos del usuario: si le cambiaron los roles,
+// las acciones visibles se actualizan sin cerrar sesión.
+const permisos = usePermisosStore();
+onMounted(() => permisos.refrescar());
 const pageLayout = computed(() => store.page_layout_value);
 
 </script>

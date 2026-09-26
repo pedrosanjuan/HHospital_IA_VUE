@@ -16,6 +16,7 @@
 </template>
 
 <script setup>
+import { usePermisosStore } from '@/store/pinia/permisos'
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { obtenerMensajeError } from '@/services/api'
@@ -37,6 +38,8 @@ async function submitLogin() {
     localStorage.setItem('access_token', response.access_token)
     localStorage.setItem('user_info', JSON.stringify(response.user_info || {}))
     localStorage.setItem('permissions', JSON.stringify(response.permisos || []))
+    // El store de permisos puede venir de una sesión anterior en esta misma pestaña.
+    usePermisosStore().codigos = (response.permisos || []).map(item => typeof item === 'string' ? item : item?.name).filter(Boolean)
     // Un fallo del menú no invalida un login correcto; el sidebar ofrecerá reintentar.
     try { await navigation.loadMenu('principal', response.user_info?.id) } catch { /* Estado visible en el sidebar. */ }
     await router.push(typeof route.query.redirect === 'string' ? route.query.redirect : '/hospitalizacion/censo')
