@@ -5,6 +5,9 @@ import { documentoPrueba, elegirEnBuscador, elegirPrimera } from './helpers'
 test('crear un paciente nuevo desde el formulario', async ({ page }) => {
   const documento = documentoPrueba()
   await page.goto('/pacientes/nuevo')
+  // La pantalla carga varios catálogos (incluido todo el CIE-10); con el backend local y la
+  // base remota puede tardar más que la espera normal de 15 s.
+  await expect(page.getByText('Cargando catálogos del hospital…')).toBeHidden({ timeout: 60_000 })
 
   // Identificación: al salir del campo la pantalla verifica que el documento no exista.
   await elegirPrimera(page, '#tipo_doc')

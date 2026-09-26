@@ -39,8 +39,10 @@ export default [
     acciones: [
       'Consultar disponibilidad y ocupación.',
       'Abrir opciones de una cama ocupada.',
-      'Gestionar medicamentos, procedimientos y signos vitales.',
-      'Solicitar traslados.',
+      'Registrar la administración de una dosis, o marcarla como "No administrada" con su motivo.',
+      'Ver la última toma de signos vitales y registrar una nueva.',
+      'Solicitar un traslado de cama.',
+      'Egresar al paciente.',
       'Abrir la atención del paciente.',
     ],
     pasos: [
@@ -49,7 +51,10 @@ export default [
       'Seleccione la tarea clínica requerida y complete el formulario.',
     ],
     notas: [
-      'Medicamentos, procedimientos y signos vitales se gestionan en ventanas modales.',
+      'Una dosis se puede registrar desde una hora antes de su hora programada.',
+      'Antes de confirmar una dosis, verifique el nombre del paciente que aparece en la ventana.',
+      'Si los signos vitales generan una alerta, el sistema lo indica al guardar: informe al médico.',
+      'Los traslados solicitados se aprueban y completan en la Bandeja de traslados.',
     ],
   },
   {
@@ -102,20 +107,52 @@ export default [
     notas: [],
   },
   {
-    ruta: /^\/hospitalizacion\/[^/]+$/,
-    titulo: 'Detalle de hospitalización',
-    proposito: 'Consulte el estado y la información asistencial de una hospitalización.',
+    // Va antes del detalle (/hospitalizacion/:id), porque "traslados" también coincidiría con él.
+    ruta: /^\/hospitalizacion\/traslados$/,
+    titulo: 'Bandeja de traslados',
+    proposito: 'Gestione los traslados de cama que están en curso: apruébelos, ejecútelos o cancélelos.',
     acciones: [
-      'Revisar paciente, admisión y ubicación.',
-      'Consultar información clínica relacionada.',
-      'Acceder a las acciones habilitadas.',
+      'Ver los traslados pendientes, aprobados y en tránsito, con paciente, cama de origen y de destino.',
+      'Filtrar por estación de enfermería.',
+      'Aprobar o rechazar una solicitud pendiente.',
+      'Marcar que el paciente va en camino.',
+      'Completar el traslado cuando el paciente ya está en la cama nueva.',
+      'Cancelar un traslado que ya no se hará.',
     ],
     pasos: [
-      'Confirme el paciente.',
-      'Revise el estado actual.',
-      'Continúe con la acción asistencial correspondiente.',
+      'Seleccione su estación (o deje "Todas las estaciones").',
+      'Revise primero los traslados urgentes: aparecen de primeros.',
+      'Apruebe la solicitud si la cama destino está lista.',
+      'Cuando el paciente salga, márquelo "en camino".',
+      'Al llegar el paciente a la nueva cama, pulse "Completar".',
     ],
-    notas: [],
+    notas: [
+      'Rechazar solo es posible mientras la solicitud está pendiente; después use "Cancelar".',
+      'El rechazo y la cancelación exigen un motivo.',
+      'Al completar, la cama de origen queda libre. Si la cama destino fue ocupada mientras tanto, el sistema no deja completar.',
+      'Mientras un traslado esté en curso, el paciente no se puede egresar.',
+    ],
+  },
+  {
+    ruta: /^\/hospitalizacion\/[^/]+$/,
+    titulo: 'Detalle de hospitalización',
+    proposito: 'Consulte la estancia de un paciente y gestione su traslado o su egreso.',
+    acciones: [
+      'Ver paciente, días de estancia, admisión, responsable y cama actual.',
+      'Ver los traslados en curso y el historial de ubicaciones (ingreso, traslados, egreso).',
+      'Abrir la atención clínica del paciente.',
+      'Solicitar un traslado de cama.',
+      'Egresar al paciente.',
+    ],
+    pasos: [
+      'Confirme que es el paciente correcto en el encabezado.',
+      'Para egresar, pulse "Egresar paciente", escriba las observaciones y confirme que existe orden médica de salida.',
+      'Si hay un traslado en curso, resuélvalo primero en la Bandeja de traslados.',
+    ],
+    notas: [
+      'El egreso no se puede deshacer: libera la cama, suspende las dosis pendientes y cierra la admisión.',
+      'Una vez egresado, el paciente puede volver a ser admitido con una nueva admisión.',
+    ],
   },
   {
     ruta: /^\/admision\/reservas\/nueva$/,

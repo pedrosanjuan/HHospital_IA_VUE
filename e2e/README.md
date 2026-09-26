@@ -1,6 +1,8 @@
 # Pruebas de pantalla automatizadas (Playwright)
 
-Estas pruebas abren un navegador, inician sesión y llenan los formularios igual que lo haría una persona. Al final verifican que la pantalla muestre el resultado esperado. Corren contra el backend local y la base de datos de **QA**, así que **sí crean datos**. Los datos de prueba se reconocen porque el documento del paciente empieza por `E2E`.
+Estas pruebas abren un navegador, inician sesión y llenan los formularios igual que lo haría una persona. Al final verifican que la pantalla muestre el resultado esperado. **Sí crean datos** en la base de QA. Los datos de prueba se reconocen porque el documento del paciente empieza por `E2E`.
+
+Siempre prueban el **backend local** (`../HHospital_IA` en `http://127.0.0.1:8000`), es decir, el código que se está desarrollando. Para eso levantan su propio frontend en el puerto **3100**, con la API fijada al backend local, sin importar a dónde apunte el `.env` del frontend (por ejemplo, al servidor de QA). Así se evita probar sin darse cuenta un backend desplegado que no tiene los cambios.
 
 ## Requisitos (una sola vez)
 
@@ -13,7 +15,7 @@ Estas pruebas abren un navegador, inician sesión y llenan los formularios igual
    ```
 4. Revise que el backend (`../HHospital_IA`) tenga su `.env` apuntando a QA.
 
-No hace falta levantar nada a mano. Si el backend (puerto 8000) y el frontend (puerto 3000) no están corriendo, Playwright los arranca, y si ya están corriendo, los reutiliza.
+No hace falta levantar nada a mano. Playwright arranca el backend (puerto 8000, con 4 procesos) y el frontend de pruebas (puerto 3100) si no están corriendo, y los reutiliza si ya lo están. Su `npm run dev` normal, en el puerto 3000, no interfiere.
 
 ## Comandos
 
@@ -40,5 +42,6 @@ npx playwright show-trace test-results/<carpeta-de-la-prueba>/trace.zip
 | `auth.setup.js` | Inicia sesión una vez y guarda la sesión para las demás pruebas. |
 | `helpers.js` | Utilidades: documento de prueba único, elegir opciones en listas y buscadores. |
 | `pacientes.spec.js` | Crear un paciente desde el formulario. |
+| `hospitalizacion.spec.js` | Estancia completa por pantalla: detalle de la hospitalización, solicitar traslado, aprobarlo y completarlo en la bandeja, y egresar. El paciente hospitalizado se prepara por la API. |
 
 Cada flujo nuevo va en su propio archivo `<modulo>.spec.js`. Para ubicar los campos se usa su `id` (`#primernombre`) o su texto visible (`getByLabel('Correo electrónico')`). Por eso, cuando se crea una pantalla, conviene que cada campo tenga `id` y etiqueta.

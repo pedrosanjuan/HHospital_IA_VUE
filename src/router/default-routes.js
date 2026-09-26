@@ -352,6 +352,12 @@ export const DefaultRoutes = (prefix) => [
     component: () => import("@/views/pages/hospitalizacion/CensoHospitalario.vue"),
   },
   {
+    path: "/hospitalizacion/traslados",
+    name: prefix + ".hospitalizacion-traslados",
+    meta: { auth: true, name: "Bandeja de traslados" },
+    component: () => import("@/views/pages/hospitalizacion/BandejaTraslados.vue"),
+  },
+  {
     path: "/hospitalizacion/:id",
     name: prefix + ".hospitalizacion-detalle",
     meta: { auth: true, name: "Detalle de hospitalización" },

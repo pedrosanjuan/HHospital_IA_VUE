@@ -149,6 +149,21 @@ export const responderReserva = (reservationId, estado, observacion = '', servic
   })
 
 export const solicitarTraslado = payload => apiRequest('/v1/tranfer-requests', { method: 'POST', body: JSON.stringify(payload) })
+// Bandeja y ciclo de vida del traslado: Pendiente → Aprobada → En Tránsito → Completada.
+// Se puede rechazar (solo pendiente) o cancelar (pendiente, aprobada o en tránsito).
+export const listarTrasladosAbiertos = (idEstacion) => apiRequest(`/v1/tranfer-requests/abiertos${toQuery({ id_estacion: idEstacion || undefined })}`)
+const accionTraslado = (id, accion, body = {}) => apiRequest(`/v1/tranfer-requests/${encodeURIComponent(id)}/${accion}`, { method: 'PATCH', body: JSON.stringify(body) })
+export const aprobarTraslado = (id, observaciones) => accionTraslado(id, 'approve', { observaciones })
+export const rechazarTraslado = (id, observaciones) => accionTraslado(id, 'reject', { observaciones })
+export const iniciarTransitoTraslado = id => accionTraslado(id, 'in-transit')
+export const completarTraslado = (id, observaciones) => accionTraslado(id, 'complete', { observaciones })
+export const cancelarTraslado = (id, motivo) => accionTraslado(id, 'cancel', { motivo })
+export const listarEstaciones = () => apiRequest('/v1/Hospitalizacion/EstacionEnfermeria')
+
+// Signos vitales y dosis no administradas.
+export const registrarSignosVitales = payload => apiRequest('/v1/Hospitalizacion/SignosVitales/registrar', { method: 'POST', body: JSON.stringify(payload) })
+export const omitirDosisMedicamento = (itemId, motivo) => apiRequest(`/v1/Hospitalizacion/PlanMedicamentos/item/${encodeURIComponent(itemId)}/omitir`, { method: 'POST', body: JSON.stringify({ motivo }) })
+
 export const egresarHospitalizacion = (hospitalizationId, observaciones) => apiRequest(`/v1/hospitalizaciones/${encodeURIComponent(hospitalizationId)}/egresar`, { method: 'POST', body: JSON.stringify({ observaciones: observaciones.trim() }) })
 
 export const consultarFormulariosEvolucion = (patientId, serviceOrderId) => apiRequest(`/v1/RegistroClinico/getRegistersForEvolution${toQuery({ id_paciente: patientId, id_orden_servicio: serviceOrderId })}`)

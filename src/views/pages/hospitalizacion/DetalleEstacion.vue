@@ -28,7 +28,7 @@
                     <router-link :to="{ ...attentionRoute(bed), hash: '#historia-clinica' }" target="_blank" rel="noopener noreferrer"><i class="ph ph-book-open-text"></i>Historia clínica<i class="ph ph-arrow-square-out external-icon"></i></router-link>
                     <span>Gestión</span>
                     <button v-if="bed.info_paciente.hospitalizacion?.estado !== 'en_traslado'" @click="openTransfer(bed)"><i class="ph ph-arrows-left-right"></i>Solicitar traslado</button>
-                    <router-link v-if="bed.info_paciente.hospitalizacion?.id" class="danger-action" :to="{ ...attentionRoute(bed), hash: '#egreso' }" target="_blank" rel="noopener noreferrer"><i class="ph ph-sign-out"></i>Egresar paciente<i class="ph ph-arrow-square-out external-icon"></i></router-link>
+                    <router-link v-if="bed.info_paciente.hospitalizacion?.id" class="danger-action" :to="{ path: `/hospitalizacion/${bed.info_paciente.hospitalizacion.id}`, query: { accion: 'egreso' } }"><i class="ph ph-sign-out"></i>Egresar paciente</router-link>
                   </div>
                 </details>
               </div>

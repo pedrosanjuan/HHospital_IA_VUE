@@ -51,10 +51,9 @@
             <label class="form-label mt-3" for="transfer-reason">Motivo del traslado <span class="text-danger">*</span></label>
             <textarea id="transfer-reason" v-model.trim="form.reason" class="form-control" rows="3" maxlength="500" required placeholder="Describa la razón clínica o administrativa del traslado"></textarea>
 
-            <label class="automatic-option mt-3">
-              <input v-model="form.automaticApproval" class="form-check-input" type="checkbox">
-              <span><strong>Aprobación automática</strong><small>Solicitar que el traslado sea aprobado inmediatamente, si el flujo lo permite.</small></span>
-            </label>
+            <!-- La aprobación se hace en la bandeja de traslados: la casilla de "aprobación
+                 automática" dejaba al paciente "en traslado" con la solicitud aún pendiente. -->
+            <p class="small text-muted mt-3 mb-0"><i class="ph ph-info me-1"></i>La solicitud queda pendiente hasta que se apruebe en la bandeja de traslados.</p>
           </div>
 
           <footer>
@@ -86,13 +85,14 @@ const availableBeds = ref([])
 const initialDate = new Date(Date.now() + 60 * 60 * 1000)
 initialDate.setSeconds(0, 0)
 const localDateTime = date => new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-const form = reactive({ destinationBedId: '', priority: 'media', estimatedDate: localDateTime(initialDate), reason: '', automaticApproval: false })
+const form = reactive({ destinationBedId: '', priority: 'media', estimatedDate: localDateTime(initialDate), reason: '' })
 
 const bedId = item => Number(item.id_cama ?? item.id)
 function bedLabel(item) {
   const location = item.ubicacion || {}
   const path = [location.sucursal, location.torre, location.piso, location.sala, location.habitacion].filter(Boolean).join(' · ')
-  return `${item.nombre || `Cama #${bedId(item)}`}${path ? ` — ${path}` : ''}`
+  // La API de camas disponibles envía el nombre en "nombre_cama".
+  return `${item.nombre_cama || item.nombre || `Cama #${bedId(item)}`}${path ? ` — ${path}` : ''}`
 }
 
 async function loadBeds() {
@@ -122,8 +122,7 @@ async function submit() {
       id_cama_destino: Number(form.destinationBedId),
       reason: form.reason,
       prioridad: form.priority,
-      fecha_estimada: `${form.estimatedDate.replace('T', ' ')}:00`,
-      aprobacion_automatica: form.automaticApproval
+      fecha_estimada: `${form.estimatedDate.replace('T', ' ')}:00`
     })
     emit('saved')
   } catch (reason) {
