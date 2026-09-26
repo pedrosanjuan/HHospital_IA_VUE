@@ -7,3 +7,9 @@ dist/
 
 # Archivos de bloqueo de LibreOffice
 .~*
+
+# Pruebas Playwright: credenciales, sesión y resultados locales
+e2e/.env.e2e
+e2e/.auth/
+test-results/
+playwright-report/
