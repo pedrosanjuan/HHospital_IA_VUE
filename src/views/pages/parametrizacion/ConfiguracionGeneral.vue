@@ -168,7 +168,19 @@
               <template v-else-if="modal === 'association'">
                 <p class="text-muted">Seleccione las opciones asociadas a <strong>{{ selectedEntity &&
                   entityName(selectedEntity) }}</strong>.</p>
-                <div class="check-grid"><label v-for="item in associationOptions" :key="item.id"><input
+                <template v-if="associationTarget === 'permissions'">
+                  <!-- Permisos agrupados por módulo, con su nombre legible y su descripción -->
+                  <input v-model.trim="permissionSearch" type="search" class="form-control mb-2" placeholder="Buscar permiso por nombre, código o módulo…">
+                  <section v-for="group in permissionGroups" :key="group.modulo" class="perm-group">
+                    <header><strong>{{ group.modulo }}</strong><small>{{ group.selected }} de {{ group.items.length }}</small><button type="button" class="btn btn-sm btn-link" @click="toggleGroup(group)">{{ group.selected === group.items.length ? 'Quitar todos' : 'Marcar todos' }}</button></header>
+                    <div v-for="item in group.items" :key="item.id" class="perm-item">
+                      <label><input v-model="associationSelected" type="checkbox" :value="item.id" class="form-check-input"><span><strong>{{ item.name }}</strong><code>{{ item.code }}</code></span></label>
+                      <details v-if="item.html"><summary>¿Qué permite?</summary><div class="perm-help" v-html="limpiarHtml(item.html)"></div></details>
+                    </div>
+                  </section>
+                  <p v-if="!permissionGroups.length" class="text-muted small">Ningún permiso coincide con la búsqueda.</p>
+                </template>
+                <div v-else class="check-grid"><label v-for="item in associationOptions" :key="item.id"><input
                       v-model="associationSelected" type="checkbox" :value="item.id" class="form-check-input">{{
                         item.name }}</label></div>
                 <div v-if="!associationOptions.length" class="empty small">
@@ -288,6 +300,7 @@ import { useRoute, useRouter } from 'vue-router'
 import SearchSelect from '@/components/form/SearchSelect.vue'
 import { obtenerMensajeError } from '@/services/api'
 import * as api from '@/services/parametrizacionGeneral'
+import { limpiarHtml } from '@/utilities/limpiarHtml'
 import { useNavigationStore } from '@/store/pinia/navigation'
 
 const route = useRoute(), router = useRouter()
@@ -308,6 +321,28 @@ const form = reactive({ name: '', tag: '', required: true, serviceId: '', profil
 const emptyService = () => ({ codigo: '', nombre: '', tag: '', cups: '', costo: 0, id_categoria: '', required_asignacion: false, json_perfiles: [], required_equipo: false, equipo: [], almacen_alltrue: false })
 const serviceForm = reactive(emptyService()), scheduleForm = reactive({ dia: 1, start: '08:00', end: '12:00', id_especialidad: '' })
 const profileCatalog = ref([]), serviceCatalog = ref([]), categoryCatalog = ref([]), specialtyCatalog = ref([]), readonlyRows = ref([]), associationOptions = ref([]), associationSelected = ref([]), originalAssociations = ref([]), associationType = ref(''), associationTarget = ref('')
+// Permisos del rol agrupados por módulo, filtrados por el buscador del modal.
+const permissionSearch = ref('')
+const normalizar = texto => String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+const permissionGroups = computed(() => {
+  const termino = normalizar(permissionSearch.value)
+  const grupos = new Map()
+  for (const item of associationOptions.value) {
+    if (termino && ![item.name, item.code, item.modulo].some(valor => normalizar(valor).includes(termino))) continue
+    if (!grupos.has(item.modulo)) grupos.set(item.modulo, [])
+    grupos.get(item.modulo).push(item)
+  }
+  // Los permisos de "Menú" van al final; el resto por orden alfabético del módulo.
+  return [...grupos.entries()]
+    .sort(([a], [b]) => (a === 'Menú') - (b === 'Menú') || a.localeCompare(b, 'es'))
+    .map(([modulo, items]) => ({ modulo, items, selected: items.filter(item => associationSelected.value.includes(item.id)).length }))
+})
+function toggleGroup(group) {
+  const ids = group.items.map(item => item.id)
+  associationSelected.value = group.selected === ids.length
+    ? associationSelected.value.filter(id => !ids.includes(id))
+    : [...new Set([...associationSelected.value, ...ids])]
+}
 const catalogs = api.CATALOGOS_GENERALES, selectedCatalog = ref(''), catalogRows = ref([]), editing = ref(false)
 const categoryFilter = ref('')
 const clinical = reactive({ assigned: [], available: [], validations: {}, registerId: '', validationRegisterId: '', section: 2, type: 1, months: '', payer: '' })
@@ -322,9 +357,9 @@ const clinicalAssignedOptions = computed(() => clinical.assigned.map(row => ({ i
 const validationGroups = computed(() => [{ key: 'at_leastOne', label: 'AL MENOS UNO', rows: array(clinical.validations?.at_leastOne) }, { key: 'all_One', label: 'TODOS OBLIGATORIOS', rows: array(clinical.validations?.all_One) }, { key: 'frecuencias', label: 'FRECUENCIAS', rows: array(clinical.validations?.frecuencias) }].filter(group => group.rows.length))
 const array = value => { if (Array.isArray(value)) return value; for (const key of ['data', 'items', 'perfiles', 'roles', 'permisos', 'menus', 'consultorios', 'especialidades', 'servicios', 'documentos']) if (Array.isArray(value?.[key])) return value[key]; return [] }
 const entityId = row => row?.id ?? row?.id_menu ?? row?.id_perfil ?? row?.id_rol ?? row?.id_permiso ?? row?.id_servicio ?? row?.id_especialidad ?? row?.id_consultorio ?? row?.id_tipo_documento
-const entityName = row => row?.nombre ?? row?.name ?? row?.menu ?? row?.profesional ?? row?.dia ?? `Registro #${entityId(row) || ''}`
+const entityName = row => (row?._kind === 'permission' ? row?.nombre_visible : null) ?? row?.nombre ?? row?.name ?? row?.menu ?? row?.profesional ?? row?.dia ?? `Registro #${entityId(row) || ''}`
 const entityCode = row => row?._kind === 'permission' ? 'PERMISO' : row?._kind === 'role' ? 'ROL' : row?.codigo || row?.tag || `ID ${entityId(row) || '—'}`
-const entityDetail = row => row?.descripcion ?? row?.servicio?.nombre ?? row?.perfil?.nombre ?? row?.categoria?.nombre ?? row?.permiso ?? row?.identificacion ?? (row?.hora_inicio ? `${row.hora_inicio} – ${row.hora_fin}` : 'Configuración institucional')
+const entityDetail = row => (row?._kind === 'permission' ? ([row?.modulo, row?.name].filter(Boolean).join(' · ') || null) : null) ?? row?.descripcion ?? row?.servicio?.nombre ?? row?.perfil?.nombre ?? row?.categoria?.nombre ?? row?.permiso ?? row?.identificacion ?? (row?.hora_inicio ? `${row.hora_inicio} – ${row.hora_fin}` : 'Configuración institucional')
 
 async function load() { loading.value = true; notice.text = ''; try { if (section.value === 'profiles') rows.value = array(await api.listarPerfilesSistema()); if (section.value === 'security') rows.value = array(await api.listarRolesSistema()).map(x => ({ ...x, _kind: 'role' })); if (section.value === 'services') { if (!categoryCatalog.value.length) categoryCatalog.value = array(await api.listarCategoriasServicios()); rows.value = array(categoryFilter.value ? await api.listarServiciosCategoria(categoryFilter.value) : await api.listarServiciosSistema()) } if (section.value === 'specialties') rows.value = array(await api.listarEspecialidadesSistema()); if (section.value === 'documents') rows.value = array(await api.listarTiposDocumentoTalento()); if (section.value === 'offices') rows.value = array(await api.listarConsultoriosSistema()) } catch (error) { showError(error) } finally { loading.value = false } }
 function selectSection(id) { section.value = id; search.value = ''; rows.value = []; router.replace({ query: { ...route.query, seccion: id } }); if (id !== 'catalogs') load() }
@@ -336,7 +371,7 @@ async function editService(row) { selectedEntity.value = row; editing.value = tr
 async function showProfessionals(row) { selectedEntity.value = row; readonlyRows.value = array(await api.listarProfesionalesEspecialidad(entityId(row))); modal.value = 'readonly' }
 async function showProfileDocuments(row) { selectedEntity.value = row; associationTarget.value = 'documents'; associationType.value = 'documentos requeridos'; const [catalog, assigned] = await Promise.all([api.listarTiposDocumentoTalento(), api.listarDocumentosPerfil(entityId(row))]); associationOptions.value = array(catalog).map(x => ({ id: Number(entityId(x)), name: entityName(x) })); associationSelected.value = array(assigned).map(entityId).map(Number); originalAssociations.value = [...associationSelected.value]; modal.value = 'association' }
 async function showProfileUsers(row) { selectedEntity.value = row; readonlyRows.value = array(await api.listarUsuariosPerfil(entityId(row))); modal.value = 'readonly' }
-async function configureRole(row) { selectedEntity.value = row; associationTarget.value = 'permissions'; associationType.value = 'permisos del rol'; const [catalog, assigned] = await Promise.all([api.listarPermisosSistema(), api.listarPermisosRol(entityId(row))]); associationOptions.value = array(catalog).map(x => ({ id: entityName(x), name: entityName(x) })); const source = assigned?.permisos || assigned?.data?.permisos || array(assigned); associationSelected.value = array(source).map(entityName); originalAssociations.value = [...associationSelected.value]; modal.value = 'association' }
+async function configureRole(row) { selectedEntity.value = row; associationTarget.value = 'permissions'; associationType.value = 'permisos del rol'; const [catalog, assigned] = await Promise.all([api.listarPermisosSistema(), api.listarPermisosRol(entityId(row))]); permissionSearch.value = ''; associationOptions.value = array(catalog).map(x => ({ id: x.name ?? entityName(x), code: x.name ?? entityName(x), name: x.nombre_visible || x.name || entityName(x), modulo: x.modulo || 'Otros', html: x.html_descripcion })); const source = assigned?.permisos || assigned?.data?.permisos || array(assigned); associationSelected.value = array(source).map(x => typeof x === 'string' ? x : (x?.name ?? entityName(x))); originalAssociations.value = [...associationSelected.value]; modal.value = 'association' }
 const flattenMenus = (items, parent = '') => array(items).flatMap(item => { const current = parent ? `${parent} / ${entityName(item)}` : entityName(item), children = item.submenus || item.children || item.menus || []; return [{ id: Number(entityId(item)), name: current }, ...flattenMenus(children, current)] }).filter(item => Number.isFinite(item.id) && item.id > 0)
 async function configureRoleMenus(row) { selectedEntity.value = row; associationTarget.value = 'menus'; associationType.value = 'menús del rol'; const [catalog, assigned] = await Promise.all([api.listarMenusSistema(), api.listarMenusRol(entityId(row))]); associationOptions.value = flattenMenus(catalog); const source = assigned?.menus || assigned?.data?.menus || assigned; associationSelected.value = flattenMenus(source).map(item => item.id); originalAssociations.value = [...associationSelected.value]; modal.value = 'association' }
 async function saveAssociation() { const add = associationSelected.value.filter(x => !originalAssociations.value.includes(x)), remove = originalAssociations.value.filter(x => !associationSelected.value.includes(x)); if (section.value === 'profiles') { if (remove.length && !window.confirm('¿Confirma que desea retirar los documentos seleccionados del perfil?')) return false; if (add.length) await api.actualizarDocumentosPerfil(entityId(selectedEntity.value), add, false); if (remove.length) await api.actualizarDocumentosPerfil(entityId(selectedEntity.value), remove, true) } else if (associationTarget.value === 'menus') { if (remove.length && !window.confirm('¿Confirma que desea retirar los menús seleccionados del rol?')) return false; if (add.length) await api.actualizarMenusRol(entityId(selectedEntity.value), add, false); if (remove.length) await api.actualizarMenusRol(entityId(selectedEntity.value), remove, true); navigationStore.clearMenus() } else { if (remove.length && !window.confirm('¿Confirma que desea retirar los permisos seleccionados del rol?')) return false; if (add.length) await api.actualizarPermisosRol(entityId(selectedEntity.value), add, false); if (remove.length) await api.actualizarPermisosRol(entityId(selectedEntity.value), remove, true); localStorage.removeItem('permissions') } return true }
@@ -845,4 +880,18 @@ onMounted(() => { if (section.value !== 'catalogs') load() })
     flex-direction: column-reverse
   }
 }
+.perm-group{margin-bottom:.8rem;border:1px solid #e4e9ef;border-radius:.65rem;overflow:hidden}
+.perm-group>header{display:flex;align-items:center;gap:.5rem;padding:.5rem .7rem;background:#f4f8fb}
+.perm-group>header small{color:#7b8997}
+.perm-group>header button{margin-left:auto}
+.perm-item{padding:.5rem .7rem;border-top:1px solid #eef2f5}
+.perm-item label{display:flex;align-items:flex-start;gap:.5rem;cursor:pointer}
+.perm-item label span strong,.perm-item label span code{display:block}
+.perm-item label span strong{font-size:.78rem}
+.perm-item code{color:#7b8997;font-size:.65rem}
+.perm-item details{margin:.3rem 0 0 1.6rem}
+.perm-item summary{color:#287fa9;font-size:.72rem;cursor:pointer}
+.perm-help{margin-top:.3rem;padding:.5rem .7rem;border-radius:.5rem;background:#f7fafc;color:#4d6071;font-size:.74rem}
+.perm-help :deep(p){margin:0 0 .3rem}
+.perm-help :deep(ul){margin:0 0 .3rem;padding-left:1.1rem}
 </style>

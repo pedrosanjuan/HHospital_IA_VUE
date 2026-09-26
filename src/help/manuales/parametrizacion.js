@@ -33,6 +33,8 @@ export default [
       'Guarde y compruebe el resultado.',
     ],
     notas: [
+      'En la pestaña Permisos, los permisos están agrupados por módulo; use el buscador y "¿Qué permite?" para saber qué autoriza cada uno.',
+      'Lo ideal es dar los permisos por rol. Un permiso directo al usuario se suma a los de sus roles; los heredados del rol no se pueden quitar desde aquí.',
       'Las vacaciones, incapacidades y permisos no deben eliminar el horario recurrente.',
     ],
   },
@@ -58,6 +60,7 @@ export default [
     proposito: 'Administre catálogos y configuraciones generales utilizadas por los módulos del hospital.',
     acciones: [
       'Configurar perfiles, seguridad y documentos.',
+      'En Roles, crear roles y elegir sus permisos: agrupados por módulo, con buscador y la descripción de cada uno en "¿Qué permite?".',
       'Administrar especialidades y servicios.',
       'Configurar consultorios y horarios.',
       'Gestionar asociaciones entre catálogos.',
@@ -69,6 +72,8 @@ export default [
     ],
     notas: [
       'Los cambios pueden afectar formularios y permisos de otros módulos.',
+      'Hay dos tipos de permisos: los de "Menú" solo muestran u ocultan opciones del menú; los demás autorizan acciones (prescribir, egresar, facturar…). Un rol normalmente necesita de ambos.',
+      'Revise con cuidado los permisos marcados con "Tenga en cuenta": son acciones sensibles o que no se pueden deshacer.',
     ],
   },
 ]
